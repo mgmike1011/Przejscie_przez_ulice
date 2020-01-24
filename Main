@@ -1,0 +1,183 @@
+#include <iostream>
+#include <deque> // do deque
+#include <conio.h> // do sterowania
+#include <windows.h>
+using namespace std;
+
+class cGracz
+{
+public:
+    int x, y;
+    cGracz(int szerokosc)  // poczatkowe ustawienie gracza, polowa szerokosci i na gorze
+    {
+        x = (szerokosc/2);
+        y = 0;
+    }
+};
+
+class cPlanasza
+{
+    deque <bool> samochody; //kontener na samochody
+    bool strona;
+public:
+    cPlanasza(int szerokosc2)
+    {
+        for(int i=0;i<szerokosc2;i++)
+            samochody.push_front(true);  //dodanie samochodow false - na poczatku nie ma ani jednego / true - znajduja sie jakies
+        strona = rand()%2;
+
+    }
+    void Ruch()
+    {
+        int los = rand()%10;  // zmienne lokalne
+        if(strona) //z ktorej strony beda jechaly auta
+        {
+            if(los==1)
+            {
+                samochody.push_front(true); //jak wylosuje 1, to maja byc samochody
+            }
+            else
+            samochody.push_front(false); // jak nie 1 to nie jada
+            samochody.pop_back(); //usunie ostatni element, by zasze byla taka sama liczba, a nie dodawaly sie w nieskonczonosc
+        }
+        else
+        {
+            if(los==1)
+            {
+            samochody.push_back(true); //jak wylosuje 1, to maja byc samochody
+            }
+            else
+            samochody.push_back(false); // jak nie 1 to nie jada
+            samochody.pop_front(); //usunie pierwszy element, by zasze byla taka sama liczba, a nie dodawaly sie w nieskonczonosc
+        }
+    }
+bool SprawdzPozycje(int pozycja)
+{
+    return samochody[pozycja]; //jak sprawdzi pozycje 2 zroci falsz, jak sprawdzi 1 zwroci prawda jak bedzie samochod
+}
+};
+
+class cGra
+{
+    bool wyjscie;  // typ logiczny tylko prawda albo falsz
+    int IloscLinii;
+    int szerokosc; //wartosci do rysowania mapy
+    int Wynik = 0;
+    cGracz* gr1; //wskaznik na gracza
+    deque<cPlanasza*> map; //kontener ze wskaznikiem na klase planszy bo tam jest kontener na auta
+
+public:
+    char posta;
+    cGra(int szeroko=20, int wysoko=10)
+    {
+        IloscLinii = wysoko; //ustawienia mapy
+        szerokosc = szeroko;
+        wyjscie = false; //domyslnie nie wychodzi z gry
+        for(int i =0;i<IloscLinii;i++)
+           map.push_back(new cPlanasza(szerokosc));
+        gr1 = new cGracz(szerokosc);
+    }
+    void Rysuj() //rysowanie planszy i bohaterow
+    {
+        system("cls");
+        for(int i = 0; i<IloscLinii; i++) //sprawdzanie kto gdzie sie znajduje
+        {
+            for(int k =0 ; k<szerokosc; k++)
+            {
+                if(i==0&&(k==0||k==szerokosc-1))
+                {
+                    cout<<"|";
+                }
+                if(i==IloscLinii-1&&(k==0||k==szerokosc-1))
+                {
+                    cout<<"|";
+                }
+
+                if(map[i]->SprawdzPozycje(k)&& i !=0 && i!=IloscLinii-1) //jesli nie jest linia 0 i ostatnia
+                {
+                    cout<<"0";
+                }
+                else if ((gr1->x == k) && (gr1->y == i))
+                {
+                    cout<<posta;
+                }
+                else
+                {
+                    cout<<" ";
+                }
+            }
+            cout<<endl;
+        }
+        cout<<"Wynik: "<<Wynik<<endl;
+
+    }
+void Sterowanie() //sterowanie od uzytkownika
+    {
+        if(_kbhit()) //sprawdza, czy jest wcisniety klawisz
+        {
+            char klawisz = _getch(); // pobierze z klawiatury
+            if(klawisz == 'a') //sprawdzanie jak sie rusza
+            {
+                gr1->x--;
+            }
+            if(klawisz == 'd') //sprawdzanie jak sie rusza
+            {
+                gr1->x++;
+            }
+            if(klawisz == 's') //sprawdzanie jak sie rusza
+            {
+                gr1->y++;
+            }
+            if(klawisz == 'w') //sprawdzanie jak sie rusza
+            {
+                gr1->y--;
+            }
+            if(klawisz == 'q') //sprawdzanie jak sie rusza
+            {
+                wyjscie = true;
+            }
+        }
+    }
+void Logika()
+    {
+        for(int i=1 ;i<IloscLinii-1;i++)
+        {
+            if(rand()%10 == 1)  //sprawdza kiedy poruszaja sie samochody
+            {
+                map[i]->Ruch();
+            }
+            if(map[i]->SprawdzPozycje(gr1->x) && gr1->y == i)
+            {
+                cout<<"Przegrana! ";
+                Sleep(3000);
+                wyjscie =true;
+            }
+        }
+        if(gr1->y == IloscLinii -1)
+        {
+            Wynik++;
+            gr1->y=0;
+        }
+    }
+void Uruchamianie()
+{
+        while(!wyjscie) //dopoki gracz nie wyjdzie gra bedzie dzialala
+        {
+            Sterowanie();
+            Rysuj();
+            Logika();
+        }
+}
+};
+
+int main()
+{
+            system("cls");
+            cGra game(30,5);
+            cout<<"Podaj znak: ";
+            cin>>game.posta;
+            game.Uruchamianie();
+
+
+return 0;
+}
